@@ -1,6 +1,12 @@
 """
 Compute TorchBench Score V2.
 """
+import os
+import re
+import yaml
+import json
+import importlib
+from pathlib import Path
 
 TORCHBENCH_V2_REF_DATA = Path(__file__).parent.joinpath("configs/v2/config-v2.yaml")
 TORCHBENCH_V2_FLAKY_TESTS = Path(__file__).parent.joinpath("configs/v2/flaky-tests.txt")
@@ -26,7 +32,6 @@ def _parse_test_name(name):
     Helper function which extracts test type (eval or train), model,
     device, and mode from the test full name.
     """
-    name = _sanitize_name(name)
     test, model_name, device, mode = re.match(r"test_(.*)\[(.*)\-(.*)\-(.*)\]", name).groups()
     return (test, model_name, device, mode)
 
@@ -58,7 +63,7 @@ class TorchBenchV2Test:
         return self._task.name
     @property
     def weight(self) -> float:
-        # config weight rule in V1: 1x CPU Training, 2x GPU Training, 2x CPU Inference, 2x GPU Inference
+        # config weight rule in V2: 1x CPU Training, 2x GPU Training, 2x CPU Inference, 2x GPU Inference
         if self.test_type == "train" and self.device == "cpu":
             return 1.0
         return 2.0
@@ -70,7 +75,7 @@ class TorchBenchV2Suite:
     @property
     def all_tests(self):
         return self._tests
-    def add_test(self, test: TorchBenchV1Test):
+    def add_test(self, test: TorchBenchV2Test):
         self._tests.append(test)
         self._tests_dict[test.name] = test
     def get_test_by_name(self, name):
@@ -104,12 +109,16 @@ class TorchBenchScoreV2:
         return delta * TORCHBENCH_V2_DELTA / 100.0
 
     # compute the V2 score
-    def _get_score(self, data):
+    def _get_score(self, data_norm):
         delta = 0.0
-        for test in self.ref:
-            delta_weight = self._get_test_delta_weight(self.ref[test]["norm"], data_norm[test]["norm"])
-            delta += delta_weight * test.weight
-        return delta * self.target
+        for test in self.norm:
+            ref_norm = self.norm[test]["norm"]
+            data_test_norm = data_norm[test]["norm"]
+            delta_weight = self._get_test_delta_weight(ref_norm, data_test_norm)
+            delta += delta_weight * self.suite.get_test_by_name(test).weight
+            if delta != 0:
+                print(f"{test}: ref_norm: {ref_norm}, data_norm: {data_test_norm}")
+        return (1 + delta) * self.target
 
     def compute_score(self, data):
         """
@@ -120,7 +129,7 @@ class TorchBenchScoreV2:
         diff_set = set(self.norm.keys()) - set(data_norm.keys())
         assert not diff_set, f"The request benchmark json is missing V2 test: {diff_set}"
         summary = {}
-        summary["total"] = self._get_score(data_norm, self.norm)
+        summary["total"] = self._get_score(data_norm)
         return summary
 
     def _setup_benchmark_norms(self, ref_data):
@@ -133,8 +142,8 @@ class TorchBenchScoreV2:
         assert isinstance(ref_data, dict), "The type of ref_data must be a dict object."
         # If the data contains machine_info key, it must be a benchmark json object
         if "benchmarks" in ref_data and "machine_info" in ref_data:
-            ref = self._get_norm_from_ref_json_obj(ref_data)
-        return ref
+            ref_data = self._get_norm_from_ref_json_obj(ref_data)
+        return ref_data
 
     def _get_norm_from_ref_json_obj(self, ref_json_obj):
         """
@@ -146,7 +155,7 @@ class TorchBenchScoreV2:
             name = b['name']
             norm.setdefault(name, dict())
             norm[name].setdefault('norm', dict())
-            norm[name]['norm'] = b['stats']['median']
+            norm[name]['norm'] = b['stats']['mean']
         return norm
 
     def get_norm(self, data):

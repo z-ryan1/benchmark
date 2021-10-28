@@ -61,6 +61,7 @@ if __name__ == "__main__":
         result = {}
         score = score_config.compute_score(data)
         result["file"] = fname
+        result["score_version"] = args.score_version
         result["pytorch_version"] = data['machine_info']['pytorch_version']
         result["score"] = score
         results.append(result)
