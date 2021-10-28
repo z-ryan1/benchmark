@@ -12,8 +12,6 @@ TORCHBENCH_V2_REF_DATA = Path(__file__).parent.joinpath("configs/v2/config-v2.ya
 TORCHBENCH_V2_FLAKY_TESTS = Path(__file__).parent.joinpath("configs/v2/flaky-tests.txt")
 # The threshold of a base performance event
 TORCHBENCH_V2_THRESHOLD = 7
-# The score delta
-TORCHBENCH_V2_DELTA = 1
 
 def _get_model_task(model_name):
     """
@@ -106,7 +104,7 @@ class TorchBenchScoreV2:
         # No valid signal found
         if abs(delta) <= TORCHBENCH_V2_THRESHOLD:
             return 0
-        return delta * TORCHBENCH_V2_DELTA / 100.0
+        return delta / TORCHBENCH_V2_THRESHOLD / 100.0
 
     # compute the V2 score
     def _get_score(self, data_norm):
@@ -116,8 +114,6 @@ class TorchBenchScoreV2:
             data_test_norm = data_norm[test]["norm"]
             delta_weight = self._get_test_delta_weight(ref_norm, data_test_norm)
             delta += delta_weight * self.suite.get_test_by_name(test).weight
-            if delta != 0:
-                print(f"{test}: ref_norm: {ref_norm}, data_norm: {data_test_norm}")
         return (1 + delta) * self.target
 
     def compute_score(self, data):
