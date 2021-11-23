@@ -200,6 +200,8 @@ class TorchBenchScoreV1:
         return True
 
     def _test_in_domain(self, test_name, target_domain):
+        if not target_domain:
+            return True
         test = self.suite.get_test_by_name(test_name)
         category = test.category
         domain = test.domain
@@ -220,10 +222,9 @@ class TorchBenchScoreV1:
             score += benchmark_score
         return math.exp(score)
 
-    def _get_domain_subscore(self, data, ref_norm, domain):
+    def _get_domain_subscore(self, data, ref_norm, domain, test):
         score = 0.0
-        # Filter all the GPU tests in the domain
-        test_names = filter(lambda x: self._test_in_domain(x, domain) and "cuda" in x, data.keys())
+        test_names = filter(lambda x: self._test_in_domain(x, domain) and "cuda" in x and test in x, data.keys())
         test_names = list(test_names)
         weight = 1.0 / len(test_names)
         for name in test_names:
@@ -270,9 +271,12 @@ class TorchBenchScoreV1:
         #     summary[key] = self._get_subscore(data_norm, self.norm, self.norm_weights, f) * self.target
         # summary["total"] = self._get_score(data_norm, self.norm, self.norm_weights) * self.target
         subscore_domains = ["NLP", "CLASSIFICATION", "SEGMENTATION", "SPEECH", "RECOMMENDATION"]
-        for domain in subscore_domains:
-            summary[domain] = self._get_domain_subscore(data_norm, self.norm, domain) * self.target
-        summary["CUDA"] = self._get_subscore(data_norm, self.norm, self.norm_weights, ["cuda"]) * self.target
+        subscore_tests = ["train", "eval"]
+        subscores = [(a, b) for a in subscore_domains for b in subscore_tests]
+        for (domain, test) in subscores:
+            summary[f"{domain}-{test}"] = self._get_domain_subscore(data_norm, self.norm, domain, test) * self.target
+        summary["CUDA-train"] = self._get_domain_subscore(data_norm, self.norm, None, "train") * self.target
+        summary["CUDA-eval"] = self._get_domain_subscore(data_norm, self.norm, None, "eval") * self.target
         return summary
 
     def get_norm(self, data):
