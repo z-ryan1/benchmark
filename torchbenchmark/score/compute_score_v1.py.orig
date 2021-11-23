@@ -85,11 +85,6 @@ class TorchBenchV1Suite:
     @property
     def all_tests(self):
         return self._tests
-    def get_test_by_name(self, name: str) -> TorchBenchV1Test:
-        for t in self._tests:
-            if t._name == name:
-                return t
-        return None
     def add_test(self, test: TorchBenchV1Test):
         self._suite_spec[test.category][test.domain][test.model].append(test)
         self._tests.append(test)
@@ -131,26 +126,26 @@ class TorchBenchScoreV1:
         domain_weights = defaultdict(float)
         config_weights = defaultdict(float)
         # Build the test suite
-        self.suite = TorchBenchV1Suite()
+        suite = TorchBenchV1Suite()
         for name in ref:
             test = TorchBenchV1Test(name)
-            self.suite.add_test(test)
+            suite.add_test(test)
         # Setup domain weights
-        for test in self.suite.all_tests:
-            category_cnt = len(self.suite.categories())
-            domain_cnt = len(self.suite.domains(test.category))
-            model_cnt = len(self.suite.models(test.category, test.domain))
+        for test in suite.all_tests:
+            category_cnt = len(suite.categories())
+            domain_cnt = len(suite.domains(test.category))
+            model_cnt = len(suite.models(test.category, test.domain))
             domain_weights[test.name] = (1.0 / category_cnt) * (1.0 / domain_cnt) * (1.0 / model_cnt)
         # Setup config weights
-        for test in self.suite.all_tests:
+        for test in suite.all_tests:
             category = test.category
             domain = test.domain
             model = test.model
-            model_tests = self.suite.tests(test.category, test.domain, test.model)
+            model_tests = suite.tests(test.category, test.domain, test.model)
             config_weights[test.name] = test.weight / sum(map(lambda x: x.weight, model_tests))
         # Runtime check the weights constraint
         sum_weight = 0.0
-        for test in self.suite.all_tests:
+        for test in suite.all_tests:
             sum_weight += config_weights[test.name] * domain_weights[test.name]
         assert(abs(sum_weight - 1.0) < 1e-6), f"The total weights sum ({sum_weight}) is not 1.0, please submit a bug report."
         return (domain_weights, config_weights)
@@ -199,35 +194,17 @@ class TorchBenchScoreV1:
                 return False
         return True
 
-    def _test_in_domain(self, test_name, target_domain):
-        test = self.suite.get_test_by_name(test_name)
-        category = test._task.category
-        domain = test._task.domain
-        if target_domain == category or target_domain == domain:
-            return True
-        return False
-        
     def _get_subscore(self, data, ref_norm, ref_weights, filters):
         error_msg = "We only accept one of the following four subscores: [cpu, train], [cpu, eval], [cuda, train], [cuda, infer]."
         assert len(filters) == 2, error_msg
         assert "cpu" in filters or "cuda" in filters, error_msg
-        # assert "train" in filters or "eval" in filters, error_msg
+        assert "train" in filters or "eval" in filters, error_msg
         score = 0.0
         (domain_weights, _) = ref_weights
         for name in filter(lambda x: self.data_in_list(x, filters), ref_norm):
             norm = data[name]['norm']
             benchmark_score = domain_weights[name] * math.log(ref_norm[name]['norm'] / norm)
             score += benchmark_score
-        return math.exp(score)
-
-    def _get_domain_subscore(self, data, ref_norm, domain):
-        score = 0.0
-        # Filter all the GPU tests in the domain
-        test_names = filter(lambda x: self._test_in_domain(x, domain) and "cuda" in x, data.keys())
-        weight = 1.0 / len(test_names)
-        for name in test_names:
-            norm = data[name]['norm']
-            score += weight * math.log(ref_norm[name]['norm'] / norm)
         return math.exp(score)
 
     def compute_jit_speedup_score(self, data):
@@ -260,18 +237,14 @@ class TorchBenchScoreV1:
         assert not diff_set, f"The request benchmark json doesn't have v1 test: {diff_set}"
 
         summary = {}
-        # summary["jit-speedup"] = self.compute_jit_speedup_score(data)
-        # devices = ["cpu", "cuda"]
-        # tests = ["train", "eval"]
-        # filters = [(a, b) for a in devices for b in tests]
-        # for f in filters:
-        #     key = f"subscore-{f[0]}-{f[1]}"
-        #     summary[key] = self._get_subscore(data_norm, self.norm, self.norm_weights, f) * self.target
-        # summary["total"] = self._get_score(data_norm, self.norm, self.norm_weights) * self.target
-        subscore_domains = ["NLP", "CLASSIFICATION", "SEGMENTATION", "SPEECH", "RECOMMENDATION"]
-        for domain in subscore_domains:
-            summary[domain] = self._get_domain_subscore(domain) * self.target
-        summary["CUDA"] = self._get_subscore(data_norm, self.norm, self.norm_weights, ["cuda"]) * self.target
+        summary["jit-speedup"] = self.compute_jit_speedup_score(data)
+        devices = ["cpu", "cuda"]
+        tests = ["train", "eval"]
+        filters = [(a, b) for a in devices for b in tests]
+        for f in filters:
+            key = f"subscore-{f[0]}-{f[1]}"
+            summary[key] = self._get_subscore(data_norm, self.norm, self.norm_weights, f) * self.target
+        summary["total"] = self._get_score(data_norm, self.norm, self.norm_weights) * self.target
         return summary
 
     def get_norm(self, data):
