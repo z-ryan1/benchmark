@@ -201,15 +201,15 @@ class TorchBenchScoreV1:
 
     def _test_in_domain(self, test_name, target_domain):
         test = self.suite.get_test_by_name(test_name)
-        category = test._task.category
-        domain = test._task.domain
+        category = test.category
+        domain = test.domain
         if target_domain == category or target_domain == domain:
             return True
         return False
         
     def _get_subscore(self, data, ref_norm, ref_weights, filters):
         error_msg = "We only accept one of the following four subscores: [cpu, train], [cpu, eval], [cuda, train], [cuda, infer]."
-        assert len(filters) == 2, error_msg
+        # assert len(filters) == 2, error_msg
         assert "cpu" in filters or "cuda" in filters, error_msg
         # assert "train" in filters or "eval" in filters, error_msg
         score = 0.0
@@ -224,6 +224,7 @@ class TorchBenchScoreV1:
         score = 0.0
         # Filter all the GPU tests in the domain
         test_names = filter(lambda x: self._test_in_domain(x, domain) and "cuda" in x, data.keys())
+        test_names = list(test_names)
         weight = 1.0 / len(test_names)
         for name in test_names:
             norm = data[name]['norm']
@@ -270,7 +271,7 @@ class TorchBenchScoreV1:
         # summary["total"] = self._get_score(data_norm, self.norm, self.norm_weights) * self.target
         subscore_domains = ["NLP", "CLASSIFICATION", "SEGMENTATION", "SPEECH", "RECOMMENDATION"]
         for domain in subscore_domains:
-            summary[domain] = self._get_domain_subscore(domain) * self.target
+            summary[domain] = self._get_domain_subscore(data_norm, self.norm, domain) * self.target
         summary["CUDA"] = self._get_subscore(data_norm, self.norm, self.norm_weights, ["cuda"]) * self.target
         return summary
 
