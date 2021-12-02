@@ -199,14 +199,15 @@ class TorchBenchScoreV1:
                 return False
         return True
 
-    def _test_in_domain(self, test_name, target_domain):
-        if not target_domain:
+    def _test_in_domain(self, test_name, target_domains):
+        if not target_domains:
             return True
         test = self.suite.get_test_by_name(test_name)
         category = test.category
         domain = test.domain
-        if target_domain == category or target_domain == domain:
-            return True
+        for td in target_domains:
+            if td == category or td == domain:
+                return True
         return False
         
     def _get_subscore(self, data, ref_norm, ref_weights, filters):
@@ -227,6 +228,7 @@ class TorchBenchScoreV1:
         test_names = filter(lambda x: self._test_in_domain(x, domain) and "cuda" in x and test in x, data.keys())
         test_names = list(test_names)
         weight = 1.0 / len(test_names)
+        # print(f"Test name: {domain}, test size: {len(test_names)}")
         for name in test_names:
             norm = data[name]['norm']
             score += weight * math.log(ref_norm[name]['norm'] / norm)
@@ -274,9 +276,9 @@ class TorchBenchScoreV1:
         subscore_tests = ["train", "eval"]
         subscores = [(a, b) for a in subscore_domains for b in subscore_tests]
         for (domain, test) in subscores:
-            summary[f"{domain}-{test}"] = self._get_domain_subscore(data_norm, self.norm, domain, test) * self.target
-        summary["CUDA-train"] = self._get_domain_subscore(data_norm, self.norm, None, "train") * self.target
-        summary["CUDA-eval"] = self._get_domain_subscore(data_norm, self.norm, None, "eval") * self.target
+            summary[f"{domain}-{test}"] = self._get_domain_subscore(data_norm, self.norm, [domain], test) * self.target
+        summary["CUDA-train"] = self._get_domain_subscore(data_norm, self.norm, subscore_domains, "train") * self.target
+        summary["CUDA-eval"] = self._get_domain_subscore(data_norm, self.norm, subscore_domains, "eval") * self.target
         return summary
 
     def get_norm(self, data):
