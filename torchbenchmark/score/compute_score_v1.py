@@ -227,10 +227,13 @@ class TorchBenchScoreV1:
         score = 0.0
         test_names = filter(lambda x: self._test_in_domain(x, domain) and "cuda" in x and test in x, data.keys())
         test_names = list(test_names)
+        # filter the noises
         weight = 1.0 / len(test_names)
-        # print(f"Test name: {domain}, test size: {len(test_names)}")
         for name in test_names:
             norm = data[name]['norm']
+            delta = (norm - ref_norm[name]['norm']) / ref_norm[name]['norm']
+            if abs(delta) * 100.0 < 7:
+                norm = ref_norm[name]['norm']
             score += weight * math.log(ref_norm[name]['norm'] / norm)
         return math.exp(score)
 
