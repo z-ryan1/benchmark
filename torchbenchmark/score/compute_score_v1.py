@@ -223,10 +223,12 @@ class TorchBenchScoreV1:
             score += benchmark_score
         return math.exp(score)
 
-    def _get_domain_subscore(self, data, ref_norm, domain, test):
+    def _get_domain_subscore(self, data, ref_norm, domain, test, device="cuda"):
         score = 0.0
-        test_names = filter(lambda x: self._test_in_domain(x, domain) and "cuda" in x and test in x, data.keys())
+        test_names = filter(lambda x: self._test_in_domain(x, domain) and device in x and test in x, data.keys())
         test_names = list(test_names)
+        if not len(test_names):
+            return 0.0
         # filter the noises
         weight = 1.0 / len(test_names)
         for name in test_names:
@@ -279,9 +281,12 @@ class TorchBenchScoreV1:
         subscore_tests = ["train", "eval"]
         subscores = [(a, b) for a in subscore_domains for b in subscore_tests]
         for (domain, test) in subscores:
-            summary[f"{domain}-{test}"] = self._get_domain_subscore(data_norm, self.norm, [domain], test) * self.target
+            summary[f"{domain}-{test}-cuda"] = self._get_domain_subscore(data_norm, self.norm, [domain], test, device="cuda") * self.target
+            summary[f"{domain}-{test}-cpu"] = self._get_domain_subscore(data_norm, self.norm, [domain], test, device="cpu") * self.target
         summary["CUDA-train"] = self._get_domain_subscore(data_norm, self.norm, subscore_domains, "train") * self.target
         summary["CUDA-eval"] = self._get_domain_subscore(data_norm, self.norm, subscore_domains, "eval") * self.target
+        summary["CPU-train"] = self._get_domain_subscore(data_norm, self.norm, subscore_domains, "train", device="cpu") * self.target
+        summary["CPU-eval"] = self._get_domain_subscore(data_norm, self.norm, subscore_domains, "eval", device="cpu") * self.target
         return summary
 
     def get_norm(self, data):
