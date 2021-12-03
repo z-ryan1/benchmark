@@ -120,7 +120,7 @@ class TorchBenchScoreV1:
             left, sep, right = jit_name.rpartition('-jit')
             eager_name = left + "-eager" + right
             # We assume if a jit test exists, there must be an eager test
-            assert eager_name in norm, f"Can't find eager test name {eager_test_name}"
+            assert eager_name in norm, f"Can't find eager test name {eager_name}"
             result_ref[jit_name] = dict()
             result_ref[jit_name]['jit_norm'] = norm[jit_name]['norm']
             result_ref[jit_name]['eager_norm'] = norm[eager_name]['norm']
@@ -223,14 +223,22 @@ class TorchBenchScoreV1:
             score += benchmark_score
         return math.exp(score)
 
-    def _get_domain_subscore(self, data, ref_norm, domain, test, device="cuda"):
+    def _get_domain_subscore(self, data, ref_norm, domain, test, device="cuda", jit=False):
         score = 0.0
         test_names = filter(lambda x: self._test_in_domain(x, domain) and device in x and test in x, data.keys())
         test_names = list(test_names)
         if not len(test_names):
             return 0.0
-        # filter the noises
         weight = 1.0 / len(test_names)
+        if jit:
+            weight = 1.0 / len(test_names)
+            for name in test_names:
+                jit_norm = data[name]['jit_norm']
+                eager_norm = data[name]['eager_norm']
+                jit_speedup_score = weight * math.log(eager_norm / jit_norm)
+                score += jit_speedup_score
+            return math.exp(score)
+        # filter the noises for non-jit score
         for name in test_names:
             norm = data[name]['norm']
             delta = (norm - ref_norm[name]['norm']) / ref_norm[name]['norm']
@@ -247,16 +255,20 @@ class TorchBenchScoreV1:
         The JIT speedup score is the geometric mean of all JIT benchmarks speedup
         comparing to corresponding non-JIT benchmarks. Its computation does not require reference data.
         """
-        score = 0.0
+        summary = {}
         norm = self._setup_benchmark_norms(data)
         norm_jit = self._filter_jit_tests(norm)
-        (domain_weights, config_weights) = self._setup_weights(norm_jit)
-        for name in norm_jit:
-            eager_norm = norm_jit[name]['eager_norm']
-            jit_norm = norm_jit[name]['jit_norm']
-            jit_speedup_score = domain_weights[name] * config_weights[name] * math.log(eager_norm / jit_norm)
-            score += jit_speedup_score
-        return math.exp(score)
+        subscore_domains = ["NLP", "CLASSIFICATION", "SEGMENTATION", "SPEECH", "RECOMMENDATION"]
+        subscore_tests = ["train", "eval"]
+        subscores = [(a, b) for a in subscore_domains for b in subscore_tests]
+        for (domain, test) in subscores:
+            summary[f"{domain}-{test}-cuda"] = self._get_domain_subscore(norm_jit, self.norm, [domain], test, device="cuda", jit=True) * self.target
+            summary[f"{domain}-{test}-cpu"] = self._get_domain_subscore(norm_jit, self.norm, [domain], test, device="cpu", jit=True) * self.target
+        summary["CUDA-train"] = self._get_domain_subscore(norm_jit, self.norm, subscore_domains, "train", jit=True) * self.target
+        summary["CUDA-eval"] = self._get_domain_subscore(norm_jit, self.norm, subscore_domains, "eval", jit=True) * self.target
+        summary["CPU-train"] = self._get_domain_subscore(norm_jit, self.norm, subscore_domains, "train", device="cpu", jit=True) * self.target
+        summary["CPU-eval"] = self._get_domain_subscore(norm_jit, self.norm, subscore_domains, "eval", device="cpu", jit=True) * self.target
+        return summary
 
     def compute_score(self, data):
         """
@@ -287,6 +299,7 @@ class TorchBenchScoreV1:
         summary["CUDA-eval"] = self._get_domain_subscore(data_norm, self.norm, subscore_domains, "eval") * self.target
         summary["CPU-train"] = self._get_domain_subscore(data_norm, self.norm, subscore_domains, "train", device="cpu") * self.target
         summary["CPU-eval"] = self._get_domain_subscore(data_norm, self.norm, subscore_domains, "eval", device="cpu") * self.target
+        summary["jit-speedup"] = self.compute_jit_speedup_score(data)
         return summary
 
     def get_norm(self, data):
