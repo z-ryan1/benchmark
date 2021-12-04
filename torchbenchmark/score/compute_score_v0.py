@@ -1,5 +1,6 @@
 """
 Compute the benchmark score given a frozen score configuration and current benchmark data.
+The V0 score has been DEPRECATED and this file is only used for future reference.
 """
 import argparse
 import json
