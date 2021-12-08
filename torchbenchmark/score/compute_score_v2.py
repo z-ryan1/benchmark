@@ -96,8 +96,8 @@ class TorchBenchScoreV2:
         delta = (ref_norm - data_norm) / ref_norm * 100.0
         # No valid signal found
         if abs(delta) <= TORCHBENCH_V2_THRESHOLD:
-            return 0
-        return 1 + delta / 100.0
+            return 1.0
+        return 1.0 + delta / 100.0
 
     # compute the V2 score
     def _get_score(self, data_norm):
