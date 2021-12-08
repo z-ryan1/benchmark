@@ -59,13 +59,6 @@ class TorchBenchV2Test:
     @property
     def domain(self) -> str:
         return self._task.name
-    @property
-    def weight(self) -> float:
-        # config weight rule in V2: 1x CPU Training, 2x GPU Training, 2x CPU Inference, 2x GPU Inference
-        if self.test_type == "train" and self.device == "cpu":
-            return 1.0
-        return 2.0
-
 class TorchBenchV2Suite:
     def __init__(self):
         self._tests = []
@@ -81,11 +74,11 @@ class TorchBenchV2Suite:
 
 class TorchBenchScoreV2:
     # ref_data: the object read from reference YAML file or benchmark json file
-    def __init__(self, ref_data, spec_file, target):
+    def __init__(self, ref_data, _spec_file, _target):
         if not ref_data:
             with open(TORCHBENCH_V2_REF_DATA) as ref_file:
                 ref_data = yaml.full_load(ref_file)
-        # flaky tests to skip in the score calculation
+        # skip flaky tests in the score calculation
         skip_file = TORCHBENCH_V2_FLAKY_TESTS
         with open(skip_file, "r") as sf:
             self.skip_tests = sf.read().splitlines()
@@ -97,14 +90,13 @@ class TorchBenchScoreV2:
         for test_name in self.norm:
             test = TorchBenchV2Test(test_name)
             self.suite.add_test(test)
-        self.target = target
 
     def _get_test_delta_weight(self, ref_norm, data_norm):
         delta = (ref_norm - data_norm) / ref_norm * 100.0
         # No valid signal found
         if abs(delta) <= TORCHBENCH_V2_THRESHOLD:
             return 0
-        return delta / TORCHBENCH_V2_THRESHOLD / 100.0
+        return 1 + delta / 100.0
 
     # compute the V2 score
     def _get_score(self, data_norm):
@@ -113,8 +105,8 @@ class TorchBenchScoreV2:
             ref_norm = self.norm[test]["norm"]
             data_test_norm = data_norm[test]["norm"]
             delta_weight = self._get_test_delta_weight(ref_norm, data_test_norm)
-            delta += delta_weight * self.suite.get_test_by_name(test).weight
-        return (1 + delta) * self.target
+            delta += delta_weight
+        return delta
 
     def compute_score(self, data):
         """
