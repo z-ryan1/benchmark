@@ -8,8 +8,9 @@ import json
 import importlib
 from pathlib import Path
 
-TORCHBENCH_V2_REF_DATA = Path(__file__).parent.joinpath("configs/v2/config-v2.yaml")
-TORCHBENCH_V2_FLAKY_TESTS = Path(__file__).parent.joinpath("configs/v2/flaky-tests.txt")
+# TODO: use v2 config and flaky test list
+TORCHBENCH_V2_REF_DATA = Path(__file__).parent.joinpath("configs/v1/config-v1.yaml")
+TORCHBENCH_V2_FLAKY_TESTS = Path(__file__).parent.joinpath("configs/v1/flaky-tests.txt")
 # The threshold of a base performance event
 TORCHBENCH_V2_THRESHOLD = 7
 
