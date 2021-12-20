@@ -28,7 +28,7 @@ conda install -y pytorch torchtext torchvision -c pytorch-nightly
 Or use pip:
 (but don't mix and match pip and conda for the torch family of libs! - [see notes below](#notes))
 ```
-pip install --upgrade torch torchtext torchvision -f https://download.pytorch.org/whl/cu111/torchvision-0.11.2%2Bcu111-cp39-cp39-linux_x86_64.whl -f https://download.pytorch.org/whl/cu111/torch-1.10.1%2Bcu111-cp37-cp37m-linux_x86_64.whl
+pip3 install --pre torch torchvision torchaudio -f https://download.pytorch.org/whl/nightly/cu111/torch_nightly.html
 ```
 
 NOTE: The install file below uses git-lfs, run the following commands to get it working
