@@ -1,3 +1,5 @@
+#!/bin/bash
+
 set -e
 gpu_name=$(nvidia-smi --format=csv,noheader --query-gpu=name --id=0 | sed 's/ /_/g')
 
