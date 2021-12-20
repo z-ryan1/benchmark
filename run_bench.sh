@@ -1,7 +1,8 @@
 #!/bin/bash
 
 set -e
-gpu_name=$(nvidia-smi --format=csv,noheader --query-gpu=name --id=0 | sed 's/ /_/g')
+# fix GPU id ordering
+export CUDA_DEVICE_ORDER=PCI_BUS_ID
 
 # gpu index
 if test -z "$1"
@@ -9,6 +10,8 @@ then
     echo Usage: "$0" GPU_IDX 1>&2
     exit 1
 fi
+
+gpu_name=$(nvidia-smi --format=csv,noheader --query-gpu=name --id="$1" | sed 's/ /_/g')
 
 export CUDA_VISIBLE_DEVICES="$1"
 
