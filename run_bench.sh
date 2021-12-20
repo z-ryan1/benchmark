@@ -1,16 +1,14 @@
-#gpu index
-idx="$1"
-
 set -e
 gpu_name=$(nvidia-smi --format=csv,noheader --query-gpu=name --id=0 | sed 's/ /_/g')
 
-if test -n "$idx"
+# gpu index
+if test -z "$1"
 then
-    export CUDA_VISIBLE_DEVICES="$idx"
-else
-    export CUDA_VISIBLE_DEVICES=0
+    echo Usage: "$0" GPU_IDX 1>&2
+    exit 1
 fi
 
+export CUDA_VISIBLE_DEVICES="$1"
 
 for i in TF32 FP32
 do

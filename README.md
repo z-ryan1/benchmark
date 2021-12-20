@@ -45,4 +45,7 @@ python install.py
 ```
 
 ### Running benchmarks
-run `sh run_bench.sh`
+
+run `sh run_bench.sh 0`
+
+NOTE: the argument to run_bench.sh is gpu_id, so in the above we run the benchmark on gpu index 0
