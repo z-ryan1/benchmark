@@ -38,6 +38,11 @@ cd <benchmark>
 python install.py
 ```
 
+NOTE: The install file above uses git-lfs, to use gitlfs\_extract.sh to download gitlfs and then add it to your path
+```
+export PATH="$PATH:$(pwd):gitlfs_dir"
+```
+
 ### Building From Source
 Note that when building PyTorch from source, torchtext and torchvision must also be built from source to make sure the C APIs match.
 
