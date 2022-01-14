@@ -1,16 +1,5 @@
 *.png filter=lfs diff=lfs merge=lfs -text
 *.pkl filter=lfs diff=lfs merge=lfs -text
-torchbenchmark/models/speech_transformer/input_data filter=lfs diff=lfs merge=lfs -text
-torchbenchmark/models/speech_transformer/input_data/dev/ filter=lfs diff=lfs merge=lfs -text
-torchbenchmark/models/speech_transformer/input_data/dev/data.json filter=lfs diff=lfs merge=lfs -text
-torchbenchmark/models/speech_transformer/input_data/dev/feats.1.ark filter=lfs diff=lfs merge=lfs -text
-torchbenchmark/models/speech_transformer/input_data/lang_1char/train_chars.txt filter=lfs diff=lfs merge=lfs -text
-torchbenchmark/models/speech_transformer/input_data/test/feats.1.ark filter=lfs diff=lfs merge=lfs -text
-torchbenchmark/models/speech_transformer/input_data/test/data.json filter=lfs diff=lfs merge=lfs -text
-torchbenchmark/models/speech_transformer/input_data/train/data.json filter=lfs diff=lfs merge=lfs -text
-torchbenchmark/models/speech_transformer/input_data/train/feats.1.ark filter=lfs diff=lfs merge=lfs -text
-torchbenchmark/models/pytorch_CycleGAN_and_pix2pix/imgs/edges2cats.jpg filter=lfs diff=lfs merge=lfs -text
-torchbenchmark/models/pytorch_CycleGAN_and_pix2pix/imgs/horse2zebra.gif filter=lfs diff=lfs merge=lfs -text
 torchbenchmark/models/BERT_pytorch/data/corpus.small filter=lfs diff=lfs merge=lfs -text
 torchbenchmark/models/BERT_pytorch/data/vocab.small filter=lfs diff=lfs merge=lfs -text
 torchbenchmark/models/dlrm/input/dist_emb_0.log filter=lfs diff=lfs merge=lfs -text
