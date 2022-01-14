@@ -12,3 +12,15 @@ MonkeyType
 psutil
 pyyaml
 numpy == 1.17.5
+datasets
+future
+gym
+kornia
+numpy
+onnx
+pydot
+scikit-image
+scikit-learn
+sentencepiece
+tqdm
+transformers==4.5.0
