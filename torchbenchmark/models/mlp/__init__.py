@@ -48,7 +48,7 @@ class Model(BenchmarkModel):
         self.X_train, self.y_train = self.X_train.to(self.device), self.y_train.to(self.device)
         self.X_eval, self.y_eval = self.X_eval.to(self.device), self.y_eval.to(self.device)
 
-        self.model = MLP(X_train.shape[1], y_train.shape[1])
+        self.model = MLP(X_train.shape[1], y_train.shape[1]).to(device)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=lr, weight_decay=weight_decay, eps=eps,
                                           betas=(beta_1, beta_2))
         self.criterion = nn.BCELoss()
@@ -66,6 +66,9 @@ class Model(BenchmarkModel):
         self.model.eval()
         for _ in range(niter):
             out = self.model(self.X_eval)
+
+    def get_module(self):
+        return self.model, self.X_train
 
 
 if __name__ == '__main__':
