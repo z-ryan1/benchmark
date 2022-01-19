@@ -25,33 +25,22 @@ class Model(BenchmarkModel):
         super().__init__(*args, **kwargs)
         self.device = device
         self.jit = jit
-        if self.device == 'cuda':
-            torch.backends.cudnn.deterministic = False
-            torch.backends.cudnn.benchmark = False
 
         X, y = datasets.load_breast_cancer(return_X_y=True)
-        X_train, X_val, y_train, y_val = train_test_split(X, y, random_state=1337)
-        X_train, X_val, y_train, y_val = X_train.astype(np.float32), X_val.astype(np.float32), \
-                                         y_train.astype(np.float32), y_val.astype(np.float32)
-        X_train, X_val, y_train, y_val = torch.from_numpy(X_train), torch.from_numpy(X_val), \
-                                         torch.from_numpy(y_train), torch.from_numpy(y_val)
-        y_train = y_train.reshape(-1, 1)
-        y_val = y_val.reshape(-1, 1)
+        X_train, X_val, y_train, y_val = map(self.array_to_tensor, train_test_split(X, y, random_state=1337))
 
-        train_dataset = TensorDataset(X_train, y_train)
-        test_dataset = TensorDataset(X_val, y_val)
         self.bs = min(200, X_train.shape[0])
-        self.trainloader = DataLoader(train_dataset, batch_size=self.bs)
-        self.testloader = DataLoader(test_dataset, batch_size=self.bs)
-        self.X_train, self.y_train = next(iter(self.trainloader))
-        self.X_eval, self.y_eval = next(iter(self.testloader))
-        self.X_train, self.y_train = self.X_train.to(self.device), self.y_train.to(self.device)
-        self.X_eval, self.y_eval = self.X_eval.to(self.device), self.y_eval.to(self.device)
+        self.X_train = X_train[:self.bs]
+        self.y_train = y_train[:self.bs]
+        self.X_eval = X_val[:self.bs]
 
         self.model = MLP(X_train.shape[1], y_train.shape[1]).to(device)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=lr, weight_decay=weight_decay, eps=eps,
                                           betas=(beta_1, beta_2))
         self.criterion = nn.BCELoss()
+
+    def array_to_tensor(self, x):
+        return torch.from_numpy(x.astype(np.float32)).reshape(-1, 1).to(self.device)
 
     def train(self, niter=1):
         self.model.train()
@@ -68,6 +57,8 @@ class Model(BenchmarkModel):
             out = self.model(self.X_eval)
 
     def get_module(self):
+        if self.jit:
+            raise NotImplementedError()
         return self.model, self.X_train
 
 
