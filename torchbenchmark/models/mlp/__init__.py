@@ -40,8 +40,6 @@ class Model(BenchmarkModel):
         self.criterion = nn.BCELoss()
 
     def array_to_tensor(self, x):
-        if self.jit:
-            raise NotImplementedError()
         return torch.from_numpy(x.astype(np.float32)).reshape(-1, 1).to(self.device)
 
     def train(self, niter=1):
