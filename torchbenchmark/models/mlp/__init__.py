@@ -4,7 +4,6 @@ from sklearn import datasets
 from sklearn.model_selection import train_test_split
 import torch
 import torch.nn as nn
-from torch.utils.data import TensorDataset, DataLoader
 import numpy as np
 from .mlp import MLP
 from ...util.model import BenchmarkModel
