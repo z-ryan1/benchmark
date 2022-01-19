@@ -40,9 +40,13 @@ class Model(BenchmarkModel):
         self.criterion = nn.BCELoss()
 
     def array_to_tensor(self, x):
+        if self.jit:
+            raise NotImplementedError()
         return torch.from_numpy(x.astype(np.float32)).reshape(-1, 1).to(self.device)
 
     def train(self, niter=1):
+        if self.jit:
+            raise NotImplementedError()
         self.model.train()
         for _ in range(niter):
             out = self.model(self.X_train)
@@ -52,6 +56,8 @@ class Model(BenchmarkModel):
             self.optimizer.step()
 
     def eval(self, niter=1):
+        if self.jit:
+            raise NotImplementedError()
         self.model.eval()
         for _ in range(niter):
             out = self.model(self.X_eval)
@@ -64,8 +70,7 @@ class Model(BenchmarkModel):
 
 if __name__ == '__main__':
     for device in ['cpu', 'cuda']:
-        for jit in [False, True]:
-            print("Testing device {}, JIT {}".format(device, jit))
-            m = Model(device=device, jit=jit)
-            m.train()
-            m.eval()
+        print("Testing device {}, JIT {}".format(device, False))
+        m = Model(device=device, jit=False)
+        m.train()
+        m.eval()
