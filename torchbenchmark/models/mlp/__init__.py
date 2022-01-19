@@ -64,7 +64,8 @@ class Model(BenchmarkModel):
 
 if __name__ == '__main__':
     for device in ['cpu', 'cuda']:
-        print("Testing device {}, JIT {}".format(device, 'False'))
-        m = Model(device=device, jit=False)
-        m.train()
-        m.eval()
+        for jit in [False, True]:
+            print("Testing device {}, JIT {}".format(device, jit))
+            m = Model(device=device, jit=jit)
+            m.train()
+            m.eval()
