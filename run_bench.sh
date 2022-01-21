@@ -27,5 +27,5 @@ do
     fi
     name="$(hostname -s)_${gpu_name}_$i" 
 
-    pytest test_bench.py --benchmark-save-data -k "hf_Longformer-cuda-eager or BERT_pytorch-cuda-eager or nvidia_deeprecommender-cuda-eager or resnet50-cuda-eager or dlrm-cuda-eager or timm_efficientnet-cuda-eager or drq-cuda-eager or soft_actor_critic-cuda-eager or hf_GPT2-cuda-eager or timm_vision_transformer-cuda-eager or resnet18-cuda-eager or mlp-cuda-eager" --ignore_machine_config --benchmark-autosave --benchmark-warmup=on --cache-clear --benchmark-min-rounds=500 --benchmark-json="$name".json | tee "$name".out
+    pytest test_bench.py --benchmark-save-data -k "hf_Longformer-cuda-eager or BERT_pytorch-cuda-eager or nvidia_deeprecommender-cuda-eager or resnet50-cuda-eager or dlrm-cuda-eager or timm_efficientnet-cuda-eager or drq-cuda-eager or soft_actor_critic-cuda-eager or hf_GPT2-cuda-eager or timm_vision_transformer-cuda-eager or resnet18-cuda-eager or mlp-cuda-eager or seq2seq-cuda-eager" --ignore_machine_config --benchmark-autosave --benchmark-warmup=on --cache-clear --benchmark-min-rounds=500 --benchmark-json="$name".json | tee "$name".out
 done
