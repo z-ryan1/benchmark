@@ -65,19 +65,17 @@ class Model(BenchmarkModel):
 
             self.optimizer.step()
 
-            print("training loss:", loss)
-
     def eval(self, niter=1):
         if self.jit:
             raise NotImplementedError()
 
         self.model.eval()
 
-        for _ in range(niter):
-            loss = self.model(self.input_tensor,
-                              self.target_tensor,
-                              use_teacher_forcing=False)
-            print("eval loss:", loss)
+        with torch.no_grad():
+            for _ in range(niter):
+                loss = self.model(self.input_tensor,
+                                  self.target_tensor,
+                                  use_teacher_forcing=False)
 
     def get_module(self):
         if self.jit:
