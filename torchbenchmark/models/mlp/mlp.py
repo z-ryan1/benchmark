@@ -1,8 +1,9 @@
-import torch.nn as nn
 import torch
+import torch.nn as nn
 
 
 class MLP(nn.Module):
+
     def __init__(self, in_dims, out_dims, layer_size=100):
         super().__init__()
         self.hidden_layer1 = nn.Linear(in_dims, layer_size)
