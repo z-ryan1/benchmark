@@ -55,5 +55,57 @@ class DecoderRNN(nn.Module):
         output = self.softmax(self.out(output[0]))
         return output, hidden, cell
 
-    def initHidden(self):
-        return torch.zeros(1, 1, self.hidden_size, device=device)
+
+class Seq2Seq(nn.Module):
+
+    def __init__(self, input_size, output_size, hidden_size, batch_size,
+                 seq_len):
+        super().__init__()
+        self.enc = EncoderRNN(input_size, hidden_size)
+        self.dec = DecoderRNN(hidden_size, output_size, seq_len)
+        self.criterion = nn.NLLLoss()
+
+        self.seq_len = seq_len
+        self.bs = batch_size
+        self.hidden_size = hidden_size
+
+    def init_hidden(self, device):
+        return torch.zeros(1, self.bs, self.hidden_size, device=device)
+
+    def forward(self, input_tensor, target_tensor, use_teacher_forcing):
+        device = input_tensor.device
+
+        encoder_hidden, encoder_cell = self.init_hidden(
+            device), self.init_hidden(device)
+
+        encoder_outputs = torch.zeros(self.seq_len,
+                                      self.bs,
+                                      self.hidden_size,
+                                      dtype=torch.float32,
+                                      device=device)
+
+        for i, input_word in enumerate(input_tensor):
+            encoder_outputs[i], encoder_hidden, encoder_cell = self.enc(
+                input_word, encoder_hidden, encoder_cell)
+
+        decoder_hidden = encoder_hidden
+        decoder_cell = encoder_cell
+
+        # mimic the <SOS> token
+        decoder_input = torch.zeros(self.bs, dtype=torch.long, device=device)
+
+        loss = 0
+        for target_word in target_tensor:
+
+            decoder_output, decoder_hidden, cell = self.dec(
+                decoder_input, decoder_hidden, decoder_cell, encoder_outputs)
+
+            loss += self.criterion(decoder_output, target_word)
+
+            if use_teacher_forcing:
+                decoder_input = target_word
+
+            else:
+                decoder_input = decoder_output.topk(1)[1].flatten()
+
+        return loss
