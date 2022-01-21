@@ -24,3 +24,4 @@ scikit-learn
 sentencepiece
 tqdm
 transformers==4.5.0
+torch-geometric==2.0.3

@@ -36,7 +36,9 @@ conda install -y pytorch torchtext torchvision cudatoolkit=11.3 -c pytorch-night
 Or use pip:
 (but don't mix and match pip and conda for the torch family of libs! - [see notes below](#notes))
 ```
-pip3 install torch==1.10.1 torchvision==0.11.2 torchtext==0.11.1 -f https://download.pytorch.org/whl/cu112/torch_stable.html
+pip3 install torch==1.10.1+cu113 torchvision==0.11.2+cu113 torchtext -f https://download.pytorch.org/whl/cu113/torch_stable.html
+pip3 install torch-scatter -f https://data.pyg.org/whl/torch-1.10.1+cu113.html
+pip3 install torch-sparse -f https://data.pyg.org/whl/torch-1.10.1+cu113.html
 ```
 
 Install the benchmark suite dependencies.  Currently, the repo is intended to be installed from the source tree.
