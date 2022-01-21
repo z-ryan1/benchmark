@@ -20,3 +20,4 @@ results.txt
 checkpoints
 logs/
 scripts/scribe.py
+torchbenchmark/models/GAT/data
