@@ -28,4 +28,5 @@ do
     name="$(hostname -s)_${gpu_name}_$i" 
 
     pytest test_bench.py --benchmark-save-data -k "cuda-eager" --ignore_machine_config --benchmark-autosave --benchmark-warmup=on --cache-clear --benchmark-min-rounds=500 --benchmark-json="$name".json | tee "$name".out
+    python parse.py --file "$name".json --out "$name".csv
 done
