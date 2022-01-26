@@ -16,7 +16,6 @@ datasets
 future
 gym
 kornia
-numpy
 onnx
 pydot
 scikit-image
