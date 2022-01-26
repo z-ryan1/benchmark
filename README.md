@@ -16,14 +16,11 @@ pip3 install torch-scatter -f https://data.pyg.org/whl/torch-1.10.1+cu113.html
 pip3 install torch-sparse -f https://data.pyg.org/whl/torch-1.10.1+cu113.html
 ```
 
-Install the benchmark suite dependencies and [git-lfs](https://git-lfs.github.com/).  Currently, the repo is intended to be installed from the source tree.
+Install the benchmark suite dependencies.  Currently, the repo is intended to be installed from the source tree.
 ```
 git clone <benchmark>
 cd <benchmark>
 pip install -r requirements.txt
-git-lfs install
-git-lfs fetch
-git-lfs checkout
 ```
 
 ## Running our benchmark
