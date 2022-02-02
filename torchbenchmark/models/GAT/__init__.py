@@ -15,6 +15,9 @@ from .gat import GAT
 
 from torchbenchmark.tasks import OTHER
 
+torch.manual_seed(1337)
+random.seed(1337)
+np.random.seed(1337)
 
 class Model(BenchmarkModel):
     task = OTHER.OTHER_TASKS
