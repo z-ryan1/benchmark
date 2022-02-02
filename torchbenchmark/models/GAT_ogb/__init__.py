@@ -90,5 +90,5 @@ if __name__ == '__main__':
     for device in ['cpu', 'cuda']:
         print("Testing device {}, JIT {}".format(device, False))
         m = Model(device=device)
-        m.train(niter=30)
+        m.train(niter=1)
         m.eval()
